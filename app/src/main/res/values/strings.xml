@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">PdfRenderer</string>
+    <string name="reload">Reload</string>
+</resources>
