@@ -1,20 +1,34 @@
 package com.carlosjimz87.pdfrenderer
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.carlosjimz87.pdfrenderer.databinding.ActivityMainBinding
 
 
 class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
-    private val PDF_URL2= "https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf"
-    private val PDF_URL= "https://www.adobe.com/"
+    private val PDF_URL= "https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf"
+
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
+
+    private lateinit var handler: Handler
+    private lateinit var runnable: Runnable
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        handler = Handler(Looper.getMainLooper())
+        runnable = Runnable {
+           if(binding.webView.progress < 100) {
+              binding.webView.stopLoading()
+               Log.d(TAG, "Timeout error")
+           }
+        }
 
         binding.webView.let { WebUtils.initializeWebView(it, this) }
         loadPdf(PDF_URL)
@@ -25,21 +39,21 @@ class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
     }
 
     private fun loadPdf(url: String) {
-        Log.d(TAG, "loadingPdf: $url")
         binding.webView.loadUrl(url)
 //        binding.webView.loadUrl("googlechrome://navigate?url=$url")
     }
 
     override fun onPageStarted(url: String) {
-        Toast.makeText(this, "page started on $url", Toast.LENGTH_SHORT).show()
+        binding.progressBar.visibility = ProgressBar.VISIBLE
+        handler.postDelayed(runnable, 15000)
     }
 
     override fun onPageFinished(url: String) {
-        Toast.makeText(this, "page finished on $url", Toast.LENGTH_SHORT).show()
+        binding.progressBar.visibility = ProgressBar.INVISIBLE
+        handler.removeCallbacks(runnable)
     }
 
     override fun doUpdateVisitedHistory(url: String) {
-        Toast.makeText(this, "visited history on $url", Toast.LENGTH_SHORT).show()
     }
 
     override fun onReceivedError(error: String) {

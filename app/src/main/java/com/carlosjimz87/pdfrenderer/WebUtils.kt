@@ -42,7 +42,6 @@ class WebUtils {
         private fun configSettingsWebView(webView: WebView) {
             webView.settings.javaScriptEnabled = true
             webView.settings.domStorageEnabled = true
-            Log.d(TAG, "enabling javascript and domStorage")
         }
 
         /**
@@ -79,7 +78,7 @@ class WebUtils {
                     request: WebResourceRequest?,
                     error: WebResourceError?
                 ) {
-                    Log.e(TAG, "l> onReceivedError: $error")
+                    Log.e(TAG, "l> onReceivedError: (${error?.errorCode}) ${error?.description}")
                     super.onReceivedError(view, request, error)
                     listenerWebView.onReceivedError(error?.description.toString())
                 }
@@ -105,7 +104,6 @@ class WebUtils {
                 }
 
             }
-            Log.d(TAG, "initializing webclient")
         }
 
         /**
@@ -125,12 +123,11 @@ class WebUtils {
                 }
 
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                    Log.d(TAG, "onConsoleMessage $consoleMessage")
+//                    Log.d(TAG, "onConsoleMessage ${consoleMessage?.message()}")
                     return super.onConsoleMessage(consoleMessage)
 
                 }
             }
-            Log.d(TAG, "initializing webChromeClient")
         }
     }
 }
