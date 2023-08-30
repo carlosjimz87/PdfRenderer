@@ -1,4 +1,4 @@
-package com.carlosjimz87.pdfrenderer
+package com.carlosjimz87.pdfrenderer.utils
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap

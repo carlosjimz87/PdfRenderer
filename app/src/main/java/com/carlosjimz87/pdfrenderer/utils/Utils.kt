@@ -1,4 +1,4 @@
-package com.carlosjimz87.pdfrenderer
+package com.carlosjimz87.pdfrenderer.utils
 //
 //val Any.TAG: String
 //    get() {
