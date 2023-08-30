@@ -12,7 +12,7 @@ object PdfUtils {
     lateinit var pdfRenderer: PdfRenderer
 
     interface PdfRendererCallback {
-        fun onRendered()
+        fun onRendered(totalPages: Int)
         fun onFailure()
     }
 
@@ -28,8 +28,8 @@ object PdfUtils {
             val fileDescriptor =
                 ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
             pdfRenderer = PdfRenderer(fileDescriptor)
-            val pageCount = pdfRenderer.pageCount
-            if (pageCount > 0) {
+            val totalPages = pdfRenderer.pageCount
+            if (totalPages > 0) {
                 val page = pdfRenderer.openPage(pageIndex ?: 0)
                 val bitmap = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
@@ -38,7 +38,7 @@ object PdfUtils {
             }
             pdfRenderer.close()
             fileDescriptor.close()
-            callback.onRendered()
+            callback.onRendered(totalPages)
         } catch (e: IOException) {
             e.printStackTrace()
             callback.onFailure()
