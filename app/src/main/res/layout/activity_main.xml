@@ -9,10 +9,15 @@
     tools:context=".MainActivity">
 
 
-    <WebView
-        android:id="@+id/webView"
+    <ImageView
+        android:id="@+id/imageView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_pdf"
+        app:layout_constraintBottom_toTopOf="@+id/btnReload"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -22,10 +27,10 @@
         android:indeterminate="true"
         android:visibility="visible"
         android:alpha="0.4"
-        app:layout_constraintBottom_toBottomOf="@+id/webView"
-        app:layout_constraintEnd_toEndOf="@+id/webView"
-        app:layout_constraintStart_toStartOf="@+id/webView"
-        app:layout_constraintTop_toTopOf="@+id/webView" />
+        app:layout_constraintBottom_toBottomOf="@+id/imageView"
+        app:layout_constraintEnd_toEndOf="@+id/imageView"
+        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
 
     <Button
         android:id="@+id/btnReload"
