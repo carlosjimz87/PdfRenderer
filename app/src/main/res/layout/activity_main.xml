@@ -8,8 +8,7 @@
     android:paddingVertical="8dp"
     tools:context=".MainActivity">
 
-
-    <ImageView
+    <com.carlosjimz87.pdfrenderer.components.PdfImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -17,7 +16,7 @@
         android:src="@drawable/ic_pdf"
         app:layout_constraintBottom_toTopOf="@+id/btnReload"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"/>
 
     <ProgressBar
         android:id="@+id/progressBar"

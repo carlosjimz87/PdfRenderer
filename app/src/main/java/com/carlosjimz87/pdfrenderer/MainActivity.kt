@@ -1,45 +1,57 @@
 package com.carlosjimz87.pdfrenderer
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
-import android.view.GestureDetector
-import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import com.carlosjimz87.pdfrenderer.api.ApiBuilder
+import com.carlosjimz87.pdfrenderer.components.PdfImageView
 import com.carlosjimz87.pdfrenderer.databinding.ActivityMainBinding
-import com.carlosjimz87.pdfrenderer.listeners.GestureListener
 import com.carlosjimz87.pdfrenderer.utils.FileUtils
 import com.carlosjimz87.pdfrenderer.utils.PdfUtils
 import com.carlosjimz87.pdfrenderer.utils.TAG
 import java.io.File
 
 
-class MainActivity : AppCompatActivity(){
+class MainActivity : AppCompatActivity(), PdfImageView.SwipeCallback {
 
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
-    private lateinit var gestureDetector : GestureDetector
+
     private var currentPage = 0
     private var totalPageCount = 0
     private var downloadedFilePath: String? = null
-    private val PDF_URL = Constants.BASE_URL + Constants.PDF_URL
+    private val pdfFullUrl = Constants.BASE_URL + Constants.PDF_URL
+    @SuppressLint("ResourceType")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        gestureDetector = GestureDetector(this, GestureListener().apply {
-            onSwipeRight = {
-                swipeRight()
-            }
-            onSwipeLeft = {
-                swipeLeft()
-            }
-        })
+
+
+        binding.imageView.setCallback(this)
 
         binding.btnReload.setOnClickListener {
             loadPdf()
         }
         loadPdf()
+
+        binding.imageView.setStyleForImageView(this,AppCompatDelegate.getDefaultNightMode())
+    }
+
+    override fun swipeRight() {
+        if (currentPage > 0) {
+            currentPage--
+            loadPdf(currentPage)
+        }
+    }
+
+    override fun swipeLeft() {
+        if (currentPage < totalPageCount - 1) {
+            currentPage++
+            loadPdf(currentPage)
+        }
     }
 
     private fun loadPdf(page:Int?=0) {
@@ -50,7 +62,7 @@ class MainActivity : AppCompatActivity(){
             return
         }
 
-        ApiBuilder.getPdfCall(PDF_URL, ApiBuilder.build(), object : ApiBuilder.PdfDownloadCallback {
+        ApiBuilder.getPdfCall(pdfFullUrl, ApiBuilder.build(), object : ApiBuilder.PdfDownloadCallback {
 
             override fun onSuccess(responseBody: okhttp3.ResponseBody) {
                 Log.d(TAG, "l> onSuccess: ${responseBody.contentLength()}")
@@ -81,24 +93,5 @@ class MainActivity : AppCompatActivity(){
             }
         }, page)
     }
-    private fun swipeRight() {
-        if (currentPage > 0) {
-            currentPage--
-            loadPdf(currentPage)
-        }
-    }
 
-    private fun swipeLeft() {
-        if (currentPage < totalPageCount - 1) {
-            currentPage++
-            loadPdf(currentPage)
-        }
-    }
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        return if (gestureDetector.onTouchEvent(event)) {
-            true
-        } else {
-            super.onTouchEvent(event)
-        }
-    }
 }
