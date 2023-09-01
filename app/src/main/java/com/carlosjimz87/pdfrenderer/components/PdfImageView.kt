@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
+import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
@@ -25,20 +26,19 @@ class PdfImageView(context: Context, attrs: AttributeSet) : AppCompatImageView(c
     private val minScaleFactor = 1.0f
     private val maxScaleFactor = 3.0f
 
-    init {
+
+    fun init(context: Context, setLightOrDarkMode: Int? = null) {
+        this.callback = context as SwipeCallback
+        setLightOrDarkMode?.let { setStyleForImageView(context, it) }
         initGestureDetectors(context)
     }
 
-    fun setStyleForImageView(context: Context, mode: Int) {
+    private fun setStyleForImageView(context: Context, mode: Int) {
         if (mode == AppCompatDelegate.MODE_NIGHT_YES) {
             setBackgroundColor(ContextCompat.getColor(context, color.black))
         } else {
             setBackgroundColor(ContextCompat.getColor(context, color.white))
         }
-    }
-
-    fun setCallback(callback: SwipeCallback) {
-        this.callback = callback
     }
 
     private fun initGestureDetectors(context: Context) {
@@ -53,29 +53,23 @@ class PdfImageView(context: Context, attrs: AttributeSet) : AppCompatImageView(c
             }
         })
 
-        scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        scaleGestureDetector = ScaleGestureDetector(context, object : SimpleOnScaleGestureListener() {
             override fun onScale(detector: ScaleGestureDetector): Boolean {
                 scaleFactor *= detector.scaleFactor
                 scaleFactor = scaleFactor.coerceIn(minScaleFactor, maxScaleFactor)
                 applyZoom(scaleFactor)
                 return true
             }
-
-            override fun onScaleEnd(detector: ScaleGestureDetector) {
-                super.onScaleEnd(detector)
-                invalidate()
-            }
         })
+
     }
 
     private fun applyZoom(scaleFactor: Float) {
         Log.d(TAG, "changing zoom: $scaleFactor")
         val matrix = Matrix(imageMatrix)
-        matrix.postScale(scaleFactor, scaleFactor, width / 2f, height / 2f)
+        matrix.setScale(scaleFactor, scaleFactor, width / 2f, height / 2f)
         imageMatrix = matrix
     }
-
-
 
     override fun onDraw(canvas: Canvas) {
         // Apply no color filtering to prevent color inversion
@@ -103,9 +97,6 @@ class PdfImageView(context: Context, attrs: AttributeSet) : AppCompatImageView(c
         var onSwipeRight: () -> Unit = {}
         var onSwipeLeft: () -> Unit = {}
 
-        override fun onDown(e: MotionEvent): Boolean {
-            return true
-        }
 
         override fun onFling(
             e1: MotionEvent,
@@ -116,10 +107,8 @@ class PdfImageView(context: Context, attrs: AttributeSet) : AppCompatImageView(c
             Log.d(TAG, "onFling: $e1 $e2 $velocityX $velocityY")
             val distanceX = e2.x - e1.x
             val distanceY = e2.y - e1.y
-            if (abs(distanceX) > abs(distanceY) && abs(
-                    distanceX
-                ) > Constants.SWIPE_DISTANCE_THRESHOLD && abs(velocityX) > Constants.SWIPE_VELOCITY_THRESHOLD
-            ) {
+            if (abs(distanceX) > abs(distanceY) && abs(distanceX) > Constants.SWIPE_DISTANCE_THRESHOLD
+                && abs(velocityX) > Constants.SWIPE_VELOCITY_THRESHOLD) {
                 if (distanceX > 0) {
                     onSwipeRight()
                 } else {

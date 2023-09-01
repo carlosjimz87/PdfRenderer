@@ -28,16 +28,12 @@ class MainActivity : AppCompatActivity(), PdfImageView.SwipeCallback {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-
-
-        binding.imageView.setCallback(this)
+        binding.imageView.init(this, AppCompatDelegate.getDefaultNightMode())
 
         binding.btnReload.setOnClickListener {
             loadPdf()
         }
         loadPdf()
-
-        binding.imageView.setStyleForImageView(this,AppCompatDelegate.getDefaultNightMode())
     }
 
     override fun swipeRight() {
