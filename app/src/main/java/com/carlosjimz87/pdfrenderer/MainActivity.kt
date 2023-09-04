@@ -51,21 +51,36 @@ class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
             saveToFile = true,
             object : ApiBuilder.PdfDownloadCallback {
                 override fun onSuccess(responseBody: ResponseBody) {
-                    val file = File(cacheDir, FileUtils.PDF_FILE_NAME)
-                    PdfUtils.viewPdf(baseContext,file.absolutePath)
+                    onFileDownloaded()
                 }
 
                 override fun onFailure(message: String) {
                     Log.e(TAG, "API Failure: $message")
                     onReceivedError("Failed to load PDF from API ($message)")
                 }
+
+                override fun onSavedFile(filePath: String) {
+                    onFileSaved()
+                }
             })
 
         handler.postDelayed(runnable, 15000) // add timeout functionality
     }
 
-    override fun onPageStarted(url: String) {
+    private fun onFileSaved() {
+        val file = File(cacheDir, FileUtils.PDF_ENCODED_FILE_NAME)
+        PdfUtils.renderBase64(file,
+            onRenderError = {
+                onReceivedError(it)
+            },
+            viewOnMainThread = {
+                runOnUiThread {
+                    binding.webView.loadData(it, "text/html", "base64")
+                }
+            })
+    }
 
+    override fun onPageStarted(url: String) {
         handler.postDelayed(runnable, 15000)
     }
 
@@ -78,6 +93,10 @@ class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
 
     override fun onReceivedError(error: String) {
         Toast.makeText(this, "error $error", Toast.LENGTH_SHORT).show()
+    }
+
+    fun onFileDownloaded() {
+        Toast.makeText(this, "File downloaded", Toast.LENGTH_SHORT).show()
     }
 
 }

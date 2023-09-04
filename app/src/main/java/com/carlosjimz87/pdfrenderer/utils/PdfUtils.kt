@@ -5,21 +5,25 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Base64
 import android.util.Log
 import android.webkit.WebView
 import android.widget.ImageView
+import androidx.core.content.FileProvider
 import com.carlosjimz87.pdfrenderer.api.ApiBuilder
 import okhttp3.ResponseBody
 import retrofit2.Response
 import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream
 
 object PdfUtils {
@@ -42,12 +46,30 @@ object PdfUtils {
         return contentType == MIME_TYPE_PDF && contentEncoding == ENCODING_GZIP
     }
 
-    fun viewPdf(context: Context, url:String){
+    fun viewPdf(context: Context, url: String) {
         val intent = Intent(Intent.ACTION_VIEW)
         intent.setDataAndType(Uri.parse(url), MIME_TYPE_PDF)
         intent.data = Uri.parse("file://$url")
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
+    }
+
+    fun viewPdfChooser(context: Context, url: String) {
+        val file = File(url)
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, MIME_TYPE_PDF)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        val chooser = Intent.createChooser(intent, "Open PDF with")
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(chooser)
+        } else {
+            Log.e(TAG, "No application found to open PDF")
+        }
     }
 
     fun renderPdf(
@@ -71,7 +93,8 @@ object PdfUtils {
         onRenderError: (String) -> Unit = {}
     ) {
         try {
-            val reader = BufferedReader(InputStreamReader(inputStream, Charset.forName(ENCODING_UTF_8)))
+            val reader =
+                BufferedReader(InputStreamReader(inputStream, Charset.forName(ENCODING_UTF_8)))
             val stringBuilder = StringBuilder()
             var line: String?
             while (reader.readLine().also { line = it } != null) {
@@ -159,7 +182,7 @@ object PdfUtils {
 
 
     fun renderFilePdf(
-        file:File,
+        file: File,
         webView: WebView,
         onRenderError: (String) -> Unit = {}
     ) {
@@ -169,6 +192,33 @@ object PdfUtils {
             }
         } catch (e: IOException) {
             onRenderError("Error loading PDF (${e.message})")
+        }
+    }
+
+    fun renderBase64(
+        file: File,
+        onRenderError: (String) -> Unit = {},
+        viewOnMainThread: (String) -> Unit = {}
+    ) {
+        // Read the content of the file into a string
+        var base64String: String? = null
+        try {
+            val length = file.length().toInt()
+            val bytes = ByteArray(length)
+            FileInputStream(file).use { input ->
+                input.read(bytes)
+            }
+            base64String = String(bytes, StandardCharsets.UTF_8)
+        } catch (e: IOException) {
+            e.printStackTrace()
+            // Handle the error as appropriate
+        }
+
+        if (base64String != null) {
+            // Load the Base64 encoded string into the WebView
+            viewOnMainThread(base64String)
+        } else {
+            onRenderError("Error loading PDF")
         }
     }
 }
