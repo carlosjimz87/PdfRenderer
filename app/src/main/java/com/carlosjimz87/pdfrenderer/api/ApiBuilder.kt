@@ -1,7 +1,6 @@
 package com.carlosjimz87.pdfrenderer.api
 
 import android.content.Context
-import android.util.Base64
 import com.carlosjimz87.pdfrenderer.utils.FileUtils
 import com.carlosjimz87.pdfrenderer.utils.FileUtils.PDF_ENCODED_FILE_NAME
 import com.carlosjimz87.pdfrenderer.utils.PdfUtils
@@ -16,14 +15,13 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.io.File
 import java.util.zip.GZIPInputStream
 
 object ApiBuilder {
     const val BASE_URL = "https://apipre.caixabankconsumer.com"
     const val PDF_URL = "/cpc/v1.0/crm365/notificaciones/obtener"
     const val ACCESS_TOKEN =
-        "b6697e6e-b311-4275-9400-6311387d635e-1693848461" //TODO: change this to the latest
+        "0cba0103-c091-4145-bfc7-62c816255729-1693866991" //TODO: change this to the latest
     const val NOTIF_ID = "cfd02fdd-d733-eb11-9117-0050568f8b74"
     const val LANG = "es"
     const val LANG_KEY = "Idioma"
@@ -103,8 +101,8 @@ object ApiBuilder {
             ) {
                 if (response.isSuccessful) {
                     if (PdfUtils.isResponsePdf(response)) {
-                        // cacheFile(context, saveToFile, response, true, callback)
-                        cacheFile(context, saveToFile, response, false, callback)
+                        cacheFile(context, saveToFile, response, true, callback)
+                        //cacheFile(context, saveToFile, response, false, callback)
                         callback.onSuccess(response.body()!!)
                     }
                 } else {

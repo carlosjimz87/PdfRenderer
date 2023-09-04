@@ -1,11 +1,13 @@
 package com.carlosjimz87.pdfrenderer
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import com.carlosjimz87.pdfrenderer.api.ApiBuilder
 import com.carlosjimz87.pdfrenderer.api.GetPdfDataIn
 import com.carlosjimz87.pdfrenderer.databinding.ActivityMainBinding
@@ -68,16 +70,16 @@ class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
     }
 
     private fun onFileSaved() {
-        val file = File(cacheDir, FileUtils.PDF_ENCODED_FILE_NAME)
-        PdfUtils.renderBase64(file,
-            onRenderError = {
-                onReceivedError(it)
-            },
-            viewOnMainThread = {
-                runOnUiThread {
-                    binding.webView.loadData(it, "text/html", "base64")
-                }
-            })
+        val file = File(cacheDir, FileUtils.PDF_FILE_NAME)
+
+        val intent = Intent(Intent.ACTION_VIEW)
+        val uri = FileProvider.getUriForFile(baseContext, "${baseContext.packageName}.provider", file)
+
+        intent.setDataAndType(uri, PdfUtils.MIME_TYPE_PDF)
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
     }
 
     override fun onPageStarted(url: String) {
