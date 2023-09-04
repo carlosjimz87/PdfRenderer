@@ -1,9 +1,7 @@
 package com.carlosjimz87.pdfrenderer.utils
 
 import android.content.Context
-import android.util.Base64
 import android.util.Log
-import com.carlosjimz87.pdfrenderer.Constants
 import okhttp3.ResponseBody
 import java.io.File
 import java.io.FileOutputStream
@@ -13,9 +11,13 @@ import java.io.OutputStream
 import java.util.zip.GZIPInputStream
 
 object FileUtils {
-     fun saveToDisk(context: Context, body: ResponseBody): File {
-         Log.d(TAG, "saveToDisk content (${body.contentLength()}) length")
-        val file = File(context.cacheDir, Constants.PDF_FILE_NAME)
+
+    const val PDF_FILE_NAME = "TempPdf.pdf"
+    const val PDF_FILE_EXT = "pdf"
+
+    fun saveToDisk(context: Context, body: ResponseBody): File {
+        Log.d(TAG, "saveToDisk content (${body.contentLength()}) length")
+        val file = File(context.cacheDir, PDF_FILE_NAME)
         try {
             val inputStream = body.byteStream()
             val outputStream = FileOutputStream(file)
@@ -32,9 +34,11 @@ object FileUtils {
         return file
     }
 
-    fun saveGzipToDisk(context: Context, inputStream: InputStream): File {
+    fun saveGzipToDisk(context: Context, inputStream: InputStream? = null): File {
         Log.d(TAG, "saveGzipToDisk ")
-        val file = File(context.cacheDir, Constants.PDF_FILE_NAME)
+        if(inputStream == null) return File(context.cacheDir, PDF_FILE_NAME)
+
+        val file = File(context.cacheDir, PDF_FILE_NAME)
         try {
             val inputGzipStream = GZIPInputStream(inputStream)
             val outputStream = FileOutputStream(file)
@@ -56,7 +60,7 @@ object FileUtils {
     fun saveToCache(responseBody: ResponseBody, context: Context): File? {
         // Define the cache directory
         val cacheDir = context.cacheDir
-        val file = File(cacheDir, Constants.PDF_FILE_NAME)
+        val file = File(cacheDir, PDF_FILE_NAME)
 
         var inputStream: InputStream? = null
         var outputStream: OutputStream? = null
@@ -90,7 +94,7 @@ object FileUtils {
     fun saveToCache(inputStream: InputStream, context: Context): File? {
         // Define the cache directory
         val cacheDir = context.cacheDir
-        val file = File(cacheDir, Constants.PDF_FILE_NAME)
+        val file = File(cacheDir, PDF_FILE_NAME)
 
         var fileOutputStream: FileOutputStream? = null
         try {

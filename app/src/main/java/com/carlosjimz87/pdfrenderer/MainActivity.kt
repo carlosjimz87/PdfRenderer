@@ -4,11 +4,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.carlosjimz87.pdfrenderer.Constants.LANG
-import com.carlosjimz87.pdfrenderer.Constants.NOTIF_ID
 import com.carlosjimz87.pdfrenderer.api.ApiBuilder
 import com.carlosjimz87.pdfrenderer.api.GetPdfDataIn
 import com.carlosjimz87.pdfrenderer.databinding.ActivityMainBinding
@@ -48,23 +45,21 @@ class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
 
     private fun loadPdf() {
         ApiBuilder.getPdfCall(this,
-            url = Constants.PDF_URL,
-            dataIn = GetPdfDataIn(LANG, NOTIF_ID),
+            url = ApiBuilder.PDF_URL,
+            dataIn = GetPdfDataIn("es", ApiBuilder.NOTIF_ID),
             api = apiService,
-            saveToFile = false,
+            saveToFile = true,
             object : ApiBuilder.PdfDownloadCallback {
-            override fun onSuccess(responseBody: ResponseBody) {
+                override fun onSuccess(responseBody: ResponseBody) {
+                    val file = File(cacheDir, FileUtils.PDF_FILE_NAME)
+                    PdfUtils.viewPdf(baseContext,file.absolutePath)
+                }
 
-                PdfUtils.renderPdf(binding.webView,responseBody, onRenderError = {
-                    onReceivedError(it)
-                })
-            }
-
-            override fun onFailure(message: String) {
-                Log.e(TAG, "API Failure: $message")
-                onReceivedError("Failed to load PDF")
-            }
-        })
+                override fun onFailure(message: String) {
+                    Log.e(TAG, "API Failure: $message")
+                    onReceivedError("Failed to load PDF from API ($message)")
+                }
+            })
 
         handler.postDelayed(runnable, 15000) // add timeout functionality
     }
