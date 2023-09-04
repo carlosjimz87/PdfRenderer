@@ -14,6 +14,7 @@ import com.carlosjimz87.pdfrenderer.api.ApiBuilder
 import com.carlosjimz87.pdfrenderer.api.GetPdfDataIn
 import com.carlosjimz87.pdfrenderer.databinding.ActivityMainBinding
 import com.carlosjimz87.pdfrenderer.pdfrenderer.PdfRenderer
+import com.carlosjimz87.pdfrenderer.utils.PdfUtils
 import com.carlosjimz87.pdfrenderer.utils.TAG
 import com.carlosjimz87.pdfrenderer.utils.WebUtils
 import okhttp3.ResponseBody
@@ -52,6 +53,7 @@ class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
           LANG, NOTIF_ID
         ), apiService, object : ApiBuilder.PdfDownloadCallback {
             override fun onSuccess(responseBody: ResponseBody) {
+                PdfUtils.saveToCache(responseBody, this@MainActivity, Constants.PDF_FILE_NAME)
                 PdfRenderer.render(binding.webView, responseBody, onRenderError = {
                     onReceivedError(it)
                 })
