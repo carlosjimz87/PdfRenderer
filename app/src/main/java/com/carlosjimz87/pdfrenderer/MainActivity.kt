@@ -3,7 +3,6 @@ package com.carlosjimz87.pdfrenderer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Base64
 import android.util.Log
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -13,12 +12,12 @@ import com.carlosjimz87.pdfrenderer.Constants.NOTIF_ID
 import com.carlosjimz87.pdfrenderer.api.ApiBuilder
 import com.carlosjimz87.pdfrenderer.api.GetPdfDataIn
 import com.carlosjimz87.pdfrenderer.databinding.ActivityMainBinding
-import com.carlosjimz87.pdfrenderer.pdfrenderer.PdfRenderer
+import com.carlosjimz87.pdfrenderer.utils.FileUtils
 import com.carlosjimz87.pdfrenderer.utils.PdfUtils
 import com.carlosjimz87.pdfrenderer.utils.TAG
 import com.carlosjimz87.pdfrenderer.utils.WebUtils
 import okhttp3.ResponseBody
-import java.io.IOException
+import java.io.File
 
 
 class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
@@ -34,14 +33,13 @@ class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
 
         handler = Handler(Looper.getMainLooper())
         runnable = Runnable {
-            if(binding.webView.progress < 100) {
+            if (binding.webView.progress < 100) {
                 binding.webView.stopLoading()
                 Log.d(TAG, "Timeout error")
             }
         }
 
         binding.webView.let { WebUtils.initializeWebView(it, this) }
-        loadPdf()
 
         binding.btnReload.setOnClickListener {
             loadPdf()
@@ -49,12 +47,15 @@ class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
     }
 
     private fun loadPdf() {
-        ApiBuilder.getPdfCall(Constants.PDF_URL, GetPdfDataIn(
-          LANG, NOTIF_ID
-        ), apiService, object : ApiBuilder.PdfDownloadCallback {
+        ApiBuilder.getPdfCall(this,
+            url = Constants.PDF_URL,
+            dataIn = GetPdfDataIn(LANG, NOTIF_ID),
+            api = apiService,
+            saveToFile = false,
+            object : ApiBuilder.PdfDownloadCallback {
             override fun onSuccess(responseBody: ResponseBody) {
-                PdfUtils.saveToCache(responseBody, this@MainActivity, Constants.PDF_FILE_NAME)
-                PdfRenderer.render(binding.webView, responseBody, onRenderError = {
+
+                PdfUtils.renderPdf(binding.webView,responseBody, onRenderError = {
                     onReceivedError(it)
                 })
             }
@@ -69,12 +70,11 @@ class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
     }
 
     override fun onPageStarted(url: String) {
-        binding.progressBar.visibility = ProgressBar.VISIBLE
+
         handler.postDelayed(runnable, 15000)
     }
 
     override fun onPageFinished(url: String) {
-        binding.progressBar.visibility = ProgressBar.INVISIBLE
         handler.removeCallbacks(runnable)
     }
 

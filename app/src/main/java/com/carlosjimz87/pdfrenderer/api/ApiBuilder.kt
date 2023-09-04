@@ -1,7 +1,9 @@
 package com.carlosjimz87.pdfrenderer.api
 
+import android.content.Context
 import com.carlosjimz87.pdfrenderer.Constants
 import com.carlosjimz87.pdfrenderer.Constants.ACCESS_TOKEN
+import com.carlosjimz87.pdfrenderer.utils.FileUtils
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
@@ -18,7 +20,6 @@ object ApiBuilder {
     }
 
     fun build(): ApiService {
-
         // Initialize logging interceptor
         val logging = HttpLoggingInterceptor()
         logging.setLevel(HttpLoggingInterceptor.Level.BODY)
@@ -50,12 +51,14 @@ object ApiBuilder {
     }
 
     fun getPdfCall(
+        context: Context,
         url: String,
-        getPdfDataIn: GetPdfDataIn,
-        apiService: ApiService,
+        dataIn: GetPdfDataIn,
+        api: ApiService,
+        saveToFile: Boolean? = false,
         callback: PdfDownloadCallback
     ) {
-        val call = apiService.getFile(url, getPdfDataIn)
+        val call = api.getFile(url, dataIn)
 
         call.enqueue(object : Callback<ResponseBody> {
             override fun onResponse(
@@ -63,7 +66,18 @@ object ApiBuilder {
                 response: Response<ResponseBody>
             ) {
                 if (response.isSuccessful) {
-                    callback.onSuccess(response.body()!!)
+                    val contentEncoding = response.headers()["Content-Encoding"]
+                    val contentType = response.headers()["Content-Type"]
+                    if (contentType == "application/pdf" && contentEncoding == "gzip") {
+                        if (saveToFile == true) {
+                            response.body()?.byteStream()
+                                ?.let { FileUtils.saveGzipToDisk(context, it) }
+                                ?: callback.onFailure(response.message())
+                        } else {
+                            callback.onSuccess(response.body()!!)
+                        }
+                        response.body()?.let { callback.onSuccess(it) }
+                    }
                 } else {
                     callback.onFailure(response.message())
                 }

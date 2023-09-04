@@ -42,6 +42,9 @@ class WebUtils {
         private fun configSettingsWebView(webView: WebView) {
             webView.settings.javaScriptEnabled = true
             webView.settings.domStorageEnabled = true
+            webView.settings.allowFileAccess = true
+            webView.settings.allowFileAccessFromFileURLs = true
+            webView.settings.allowUniversalAccessFromFileURLs = true
         }
 
         /**
