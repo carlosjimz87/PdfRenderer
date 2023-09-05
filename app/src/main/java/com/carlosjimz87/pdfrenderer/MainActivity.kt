@@ -22,7 +22,7 @@ import java.io.File
 class MainActivity : AppCompatActivity(), WebUtils.ListenerWebView {
 
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
-    private val apiService by lazy { ApiBuilder.build() }
+    private val apiService by lazy { ApiBuilder.build(intercept = true) }
     private lateinit var handler: Handler
     private lateinit var runnable: Runnable
 
