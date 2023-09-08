@@ -5,12 +5,14 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Matrix
+import android.graphics.PointF
 import android.util.AttributeSet
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
+import android.view.animation.ScaleAnimation
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
@@ -18,19 +20,27 @@ import com.carlosjimz87.pdfrenderer.Constants
 import com.carlosjimz87.pdfrenderer.utils.TAG
 import kotlin.math.abs
 
+
 class PdfImageView(context: Context, attrs: AttributeSet) : AppCompatImageView(context, attrs) {
     private var callback: SwipeCallback? = null
-    private lateinit var gestureDetector : GestureDetector
+    private lateinit var gestureDetector: GestureDetector
     private lateinit var scaleGestureDetector: ScaleGestureDetector
     private var scaleFactor = 1.0f
     private val minScaleFactor = 1.0f
     private val maxScaleFactor = 3.0f
+    private var isSwipeEvent = false  // Flag to detect if it's a swipe event
+
+    private var lastX: Int = 0
+    private var lastY: Int = 0
+
+    private var lastTouchPoint: PointF? = null
 
 
     fun init(context: Context, setLightOrDarkMode: Int? = null) {
         this.callback = context as SwipeCallback
         setLightOrDarkMode?.let { setStyleForImageView(context, it) }
         initGestureDetectors(context)
+        initTouchListener()
     }
 
     private fun setStyleForImageView(context: Context, mode: Int) {
@@ -42,26 +52,60 @@ class PdfImageView(context: Context, attrs: AttributeSet) : AppCompatImageView(c
     }
 
     private fun initGestureDetectors(context: Context) {
-
-        gestureDetector = GestureDetector(context, GestureListener()
-            .apply {
+        gestureDetector = GestureDetector(context, GestureListener().apply {
             onSwipeRight = {
                 callback?.swipeRight()
             }
             onSwipeLeft = {
                 callback?.swipeLeft()
             }
+            onDoubleTap = {
+                // Handle double-tap zoom here. For example:
+                if (scaleFactor < maxScaleFactor) {
+                    scaleFactor *= 2f
+                    applyZoom(scaleFactor)
+                } else {
+                    scaleFactor = 1f
+                    applyZoom(scaleFactor)
+                }
+            }
         })
 
         scaleGestureDetector = ScaleGestureDetector(context, object : SimpleOnScaleGestureListener() {
             override fun onScale(detector: ScaleGestureDetector): Boolean {
-                scaleFactor *= detector.scaleFactor
-                scaleFactor = scaleFactor.coerceIn(minScaleFactor, maxScaleFactor)
-                applyZoom(scaleFactor)
+                applyZoom(detector)
                 return true
             }
         })
+    }
 
+
+    private fun initTouchListener() {
+    }
+
+    private fun applyZoom(detector: ScaleGestureDetector) {
+        val scale = 1 - detector.scaleFactor
+        val prevScale: Float = scaleFactor
+        scaleFactor += scale
+        // Minimum scale condition:
+        if (scaleFactor < 0.1f) {
+            scaleFactor = 0.1f
+        }
+        // Maximum scale condition:
+        if (scaleFactor > 10f) {
+            scaleFactor = 10f
+        }
+        val scaleAnimation = ScaleAnimation(
+            1f / prevScale,
+            1f / scaleFactor,
+            1f / prevScale,
+            1f / scaleFactor,
+            detector.focusX,
+            detector.focusY
+        )
+        scaleAnimation.duration = 0
+        scaleAnimation.fillAfter = true
+        this@PdfImageView.startAnimation(scaleAnimation)
     }
 
     private fun applyZoom(scaleFactor: Float) {
@@ -78,9 +122,14 @@ class PdfImageView(context: Context, attrs: AttributeSet) : AppCompatImageView(c
         super.onDraw(canvas)
     }
 
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        return if (gestureDetector.onTouchEvent(event) || scaleGestureDetector.onTouchEvent(event)) {
+        // No need for ACTION_DOWN or ACTION_MOVE anymore, as we're not doing panning
+
+        return if (gestureDetector.onTouchEvent(event)) {
+            true
+        } else if (scaleGestureDetector.onTouchEvent(event)) {
             true
         } else {
             super.onTouchEvent(event)
@@ -93,10 +142,9 @@ class PdfImageView(context: Context, attrs: AttributeSet) : AppCompatImageView(c
     }
 
     inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
-
         var onSwipeRight: () -> Unit = {}
         var onSwipeLeft: () -> Unit = {}
-
+        var onDoubleTap: () -> Unit = {}
 
         override fun onFling(
             e1: MotionEvent,
@@ -104,7 +152,6 @@ class PdfImageView(context: Context, attrs: AttributeSet) : AppCompatImageView(c
             velocityX: Float,
             velocityY: Float
         ): Boolean {
-            Log.d(TAG, "onFling: $e1 $e2 $velocityX $velocityY")
             val distanceX = e2.x - e1.x
             val distanceY = e2.y - e1.y
             if (abs(distanceX) > abs(distanceY) && abs(distanceX) > Constants.SWIPE_DISTANCE_THRESHOLD
@@ -118,5 +165,12 @@ class PdfImageView(context: Context, attrs: AttributeSet) : AppCompatImageView(c
             }
             return false
         }
+
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            onDoubleTap()
+            return true
+        }
     }
+
+
 }
